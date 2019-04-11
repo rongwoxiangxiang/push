@@ -3,6 +3,7 @@ package ws
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"github.com/gorilla/websocket"
 )
 
@@ -23,10 +24,9 @@ func (c *Client) read () {
 	for {
 		_, message, err := c.socket.ReadMessage()
 		if err != nil {
-			fmt.Println(err)
+			log.Println(err)
 			break
 		}
-		fmt.Print(string(message))
 		msg := Message{Sender:c.id}
 		err = json.Unmarshal(message, &msg)
 		if err != nil {
@@ -36,7 +36,7 @@ func (c *Client) read () {
 		if msg.Type == "" {
 			msg.Type = MESSAGE_TYPE_TO_BROADCAST
 		}
-		manager.broadcast <- &msg
+		manager.message <- &msg
 	}
 }
 

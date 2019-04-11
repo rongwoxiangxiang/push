@@ -27,7 +27,7 @@
                 if (!msg.val()) {
                     return false;
                 }
-                strJson = '{ "content": "' +msg.val() +'","to":"'+ user.val() + '","type":"broadcast"}';
+                strJson = '{ "content": "' +msg.val() +'","to":"'+ user.val() + '","type":"single"}';
                 conn.send(strJson);
                 msg.val("");
                 user.val("");

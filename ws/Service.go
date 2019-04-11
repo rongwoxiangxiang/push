@@ -1,7 +1,7 @@
 package ws
 
 import (
-	"fmt"
+	"log"
 	"net/http"
 	"strings"
 )
@@ -12,7 +12,7 @@ type Service struct {
 }
 
 var manager = &ClientManager{
-	broadcast:  make(chan *Message),
+	message:  make(chan *Message),
 	register:   make(chan *Client),
 	unregister: make(chan *Client),
 	clients:    make(map[string]*Client),
@@ -32,11 +32,9 @@ func (this *Service) DefaultServer () {
 func WsDefaultHandler(response http.ResponseWriter, request *http.Request) {
 	client, err := manager.CreateClient(response, request)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatalf("Create ws handler error [1] : %v", err)
 	}
-	if client != nil {
-
-	}
+	log.Println("new client create : %v", client)
 }
 
 func (this *Service) Server(pattern string) {
@@ -48,5 +46,8 @@ func (this *Service) Server(pattern string) {
 	}
 	go manager.Start()
 	http.HandleFunc(pattern, WsDefaultHandler)
-	http.ListenAndServe(this.host + ":" + this.port, nil)
+	err := http.ListenAndServe(this.host + ":" + this.port, nil)
+	if err != nil {
+		log.Fatalf("Create ws handler error [2] : %v", err)
+	}
 }
