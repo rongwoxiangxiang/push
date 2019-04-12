@@ -1,0 +1,37 @@
+{
+  "websocket监听端口": "建议nginx做代理转发",
+  "wsPort": 12345,
+
+  "websocket HTTP握手读超时": "单位毫秒",
+  "wsReadTimeout": 2000,
+
+  "websocket HTTP握手写超时": "单位毫秒",
+  "wsWriteTimeout": 2000,
+
+  "websocket读队列长度": "一般不需要修改",
+  "wsInChannelSize": 1000,
+
+  "WebSocket写队列长度": "一般不需要修改",
+  "wsOutChannelSize": 1000,
+
+  "WebSocket心跳检查间隔": "单位秒, 超过时间没有收到心跳, 服务端将主动断开链接",
+  "wsHeartbeatInterval": 60,
+
+  "内部通讯HTTP2端口": "严禁该端口暴露到外网",
+  "servicePort": 7788,
+
+  "内部通讯HTTP读超时": "单位毫秒",
+  "serviceReadTimeout": 2000,
+
+  "内部通讯HTTP2写超时": "单位毫秒",
+  "serviceWriteTimeout": 2000,
+
+  "每个连接最多加入房间数量": "目前房间ID没有校验, 所以先做简单的数量控制",
+  "maxJoinRoom": 5,
+
+  "内部通讯HTTP2 TLS证书": "私有证书",
+  "serverPem": "./default.pem",
+
+  "内部通讯HTTP2 TLS密钥": "与证书配对",
+  "serverKey": "./default.key"
+}
