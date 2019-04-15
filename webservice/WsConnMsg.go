@@ -29,12 +29,12 @@ func InitConnMgr() (err error) {
 	return
 }
 
-
-
 func (connMgr *WsConnMgr) AddConn(wsConn *WSConnection) {
 	connMgr.rwMutex.Lock()
 	defer connMgr.rwMutex.Unlock()
+
 	connMgr.connections[wsConn.connId] = wsConn
+	common.OnlineConnections_INCR()
 }
 
 func (connMgr *WsConnMgr) DelConn(wsConn *WSConnection) {
@@ -42,6 +42,7 @@ func (connMgr *WsConnMgr) DelConn(wsConn *WSConnection) {
 	defer connMgr.rwMutex.Unlock()
 
 	delete(connMgr.connections, wsConn.connId)
+	common.OnlineConnections_DESC()
 }
 
 func (connMgr *WsConnMgr) JoinRoom(roomId string, wsConn *WSConnection) (err error) {
@@ -52,6 +53,7 @@ func (connMgr *WsConnMgr) JoinRoom(roomId string, wsConn *WSConnection) (err err
 	if room, existed = connMgr.rooms[roomId]; !existed {
 		room = InitRoom(roomId)
 		connMgr.rooms[roomId] = room
+		common.RoomCount_INCR()
 	}
 	err = room.Join(wsConn)
 	return
@@ -67,6 +69,10 @@ func (connMgr *WsConnMgr) LeaveRoom(roomId string, wsConn *WSConnection) (err er
 		return
 	}
 	err = room.Leave(wsConn)
+	if room.Count() == 0 {
+		delete(connMgr.rooms, roomId)
+		common.RoomCount_DESC()
+	}
 	return
 }
 
