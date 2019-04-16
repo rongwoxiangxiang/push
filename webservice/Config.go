@@ -3,6 +3,7 @@ package webservice
 import (
 	"io/ioutil"
 	"encoding/json"
+	"log"
 )
 
 // 程序配置
@@ -32,6 +33,7 @@ func InitConfig(filename string) (err error) {
 	)
 
 	if content, err = ioutil.ReadFile(filename); err != nil {
+		log.Fatalf("Config: err io.read : %v", err)
 		return
 	}
 

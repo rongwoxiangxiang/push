@@ -87,8 +87,8 @@ func handlePushRoom(resp http.ResponseWriter, req *http.Request) {
 	room = req.PostForm.Get("room")
 	items = req.PostForm.Get("items")
 
-	if err = json.Unmarshal([]byte(items), &message); err != nil {
-		log.Printf("Service: push room err[2]:  %v", err)
+	if err = json.Unmarshal([]byte(items), &msgArr); err != nil {
+		log.Printf("Service: push all err[2]:  %v", err)
 		return
 	}
 
