@@ -5,7 +5,8 @@
     <script>
         window.addEventListener("load", function(evt) {
             var output = document.getElementById("output");
-            var input = document.getElementById("input");
+            var input  = document.getElementById("input");
+            var to     = document.getElementById("to");
             var ws;
             var print = function(message) {
                 var d = document.createElement("div");
@@ -30,9 +31,9 @@
                 ws.onerror = function(evt) {
                     print("ERROR: " + evt.data);
                 }
-                setInterval(function() {
-                    ws.send(JSON.stringify({type: "PING", data: {}}))
-                }, 10000)
+                // setInterval(function() {
+                //     ws.send(JSON.stringify({type: "PING", data: {}}))
+                // }, 10000)
                 return false;
             };
             document.getElementById("close").onclick = function(evt) {
@@ -48,6 +49,14 @@
                 }
                 print("JOIN: " + input.value);
                 ws.send(JSON.stringify({type: "JOIN", data: {room: input.value}}));
+                return false;
+            };
+            document.getElementById("msg").onclick = function(evt) {
+                if (!ws) {
+                    return false;
+                }
+                print("MSG: " + input.value);
+                ws.send(JSON.stringify({type: "MSG", data: {to: to.value, msg : input.value}}));
                 return false;
             };
             document.getElementById("leave").onclick = function(evt) {
@@ -72,8 +81,10 @@
                 <button id="open">Open</button>
                 <button id="close">Close</button>
                 <input id="input" type="text" value="默认房间">
+                <input id="to" type="text" value="to">
                 <button id="join">JOIN</button>
                 <button id="leave">LEAVE</button>
+                <button id="msg">MSG</button>
             </form>
         </td><td valign="top" width="50%">
             <div id="output"></div>

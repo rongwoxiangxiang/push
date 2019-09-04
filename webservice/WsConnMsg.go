@@ -1,6 +1,7 @@
 package webservice
 
 import (
+	"log"
 	"sync"
 	"webs/webservice/common"
 )
@@ -10,9 +11,9 @@ var (
 )
 
 type WsConnMgr struct {
-	rwMutex sync.RWMutex
+	rwMutex     sync.RWMutex
 	connections map[uint64]*WSConnection
-	rooms map[string]*Room
+	rooms       map[string]*Room
 }
 
 func InitConnMgr() (err error) {
@@ -22,7 +23,7 @@ func InitConnMgr() (err error) {
 
 	connMgr = &WsConnMgr{
 		connections: make(map[uint64]*WSConnection),
-		rooms: make(map[string]*Room),
+		rooms:       make(map[string]*Room),
 	}
 
 	G_connMgr = connMgr
@@ -47,7 +48,7 @@ func (connMgr *WsConnMgr) DelConn(wsConn *WSConnection) {
 
 func (connMgr *WsConnMgr) JoinRoom(roomId string, wsConn *WSConnection) (err error) {
 	var (
-		room *Room
+		room    *Room
 		existed bool
 	)
 	if room, existed = connMgr.rooms[roomId]; !existed {
@@ -61,7 +62,7 @@ func (connMgr *WsConnMgr) JoinRoom(roomId string, wsConn *WSConnection) (err err
 
 func (connMgr *WsConnMgr) LeaveRoom(roomId string, wsConn *WSConnection) (err error) {
 	var (
-		room *Room
+		room    *Room
 		existed bool
 	)
 	if room, existed = connMgr.rooms[roomId]; !existed {
@@ -77,6 +78,23 @@ func (connMgr *WsConnMgr) LeaveRoom(roomId string, wsConn *WSConnection) (err er
 }
 
 // 向所有在线用户发送消息
+func (connMgr *WsConnMgr) PushSingle(toUser uint64, msg *WsMessage) {
+	var (
+		connection *WSConnection
+		ok         bool
+		err        error
+	)
+	if connection, ok = connMgr.connections[toUser]; ok == false {
+		log.Printf("PushSingle user not exist, user {}", toUser)
+		return
+	}
+	err = connection.SendMessage(msg)
+	if err != nil {
+		log.Printf("PushSingle err: {}", err)
+	}
+}
+
+// 向所有在线用户发送消息
 func (connMgr *WsConnMgr) PushAll(msg *WsMessage) {
 	for _, connect := range connMgr.connections {
 		connect.SendMessage(msg)
@@ -86,7 +104,7 @@ func (connMgr *WsConnMgr) PushAll(msg *WsMessage) {
 // 向指定房间发送消息
 func (connMgr *WsConnMgr) PushRoom(roomId string, msg *WsMessage) (err error) {
 	var (
-		room *Room
+		room    *Room
 		existed bool
 	)
 	if room, existed = connMgr.rooms[roomId]; !existed {

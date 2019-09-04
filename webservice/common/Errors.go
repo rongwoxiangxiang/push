@@ -15,4 +15,3 @@ var (
 
 	ERR_CERT_INVALID = errors.New("ERR_CERT_INVALID")
 )
-

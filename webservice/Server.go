@@ -6,7 +6,7 @@ import (
 	"webs/webservice/common"
 )
 
-func Start(configs string)  {
+func Start(configs string) {
 	if configs == "" {
 		configs = "application.json"
 	}

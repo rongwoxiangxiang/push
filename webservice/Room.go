@@ -6,14 +6,14 @@ import (
 )
 
 type Room struct {
-	rwMutex sync.RWMutex
-	roomId string
+	rwMutex     sync.RWMutex
+	roomId      string
 	connections map[uint64]*WSConnection
 }
 
 func InitRoom(roomId string) (room *Room) {
-	room = &Room {
-		roomId: roomId,
+	room = &Room{
+		roomId:      roomId,
 		connections: make(map[uint64]*WSConnection),
 	}
 	return
@@ -36,7 +36,7 @@ func (room *Room) Join(wsConn *WSConnection) (err error) {
 	return
 }
 
-func (room *Room) Leave(wsConn* WSConnection) (err error) {
+func (room *Room) Leave(wsConn *WSConnection) (err error) {
 	var (
 		existed bool
 	)
