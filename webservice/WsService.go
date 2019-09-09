@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -44,7 +45,7 @@ func handleConnect(resp http.ResponseWriter, req *http.Request) {
 	connId = atomic.AddUint64(&G_wsServer.curConnId, 1)
 
 	// 初始化WebSocket的读写协程
-	wsConn = InitWSConnection(connId, wsSocket)
+	wsConn = InitWSConnection(strconv.FormatUint(connId, 10), wsSocket)
 
 	// 开始处理websocket消息
 	wsConn.WSHandle()
@@ -69,9 +70,10 @@ func InitWSServer() (err error) {
 	}
 
 	// 监听端口
-	if listener, err = net.Listen("tcp", ":12345"); err != nil {
-		return
+	if listener, err = net.Listen("tcp", ":"+strconv.Itoa(G_config.WsPort)); err != nil {
+		log.Fatal("Push Application WsService err :", err)
 	}
+	log.Println("Push Application start at port :", G_config.WsPort)
 
 	// 赋值全局变量
 	G_wsServer = &WSServer{

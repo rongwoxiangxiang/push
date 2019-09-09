@@ -9,20 +9,32 @@ import (
 
 type WSConnection struct {
 	mutex             sync.Mutex
-	connId            uint64
+	connId            string
 	wsSocket          *websocket.Conn
 	inChan            chan *WsMessage
 	outChan           chan *WsMessage
 	closeChan         chan byte
 	isClosed          bool
 	lastHeartbeatTime time.Time       // 最近一次心跳时间
-	rooms             map[string]bool // 加入了哪些房间
+	rooms             map[string]bool // 加入了哪些房间,单个ws不存在并发
 }
 
-var (
-	SendMessageTotal int64
-	FailMessageTotal int64
-)
+func InitWSConnection(connId string, wsSocket *websocket.Conn) (wsConnection *WSConnection) {
+	wsConnection = &WSConnection{
+		wsSocket:          wsSocket,
+		connId:            connId,
+		inChan:            make(chan *WsMessage, G_config.WsInChannelSize),
+		outChan:           make(chan *WsMessage, G_config.WsOutChannelSize),
+		closeChan:         make(chan byte),
+		lastHeartbeatTime: time.Now(),
+		rooms:             make(map[string]bool), //同一个用户不能在同一时刻加入两个房间，不存在并发
+	}
+
+	go wsConnection.readLoop()
+	go wsConnection.writeLoop()
+
+	return
+}
 
 // 读websocket
 func (wsConnection *WSConnection) readLoop() {
@@ -69,23 +81,6 @@ func (wsConnection *WSConnection) writeLoop() {
 ERR:
 	wsConnection.Close()
 CLOSED:
-}
-
-func InitWSConnection(connId uint64, wsSocket *websocket.Conn) (wsConnection *WSConnection) {
-	wsConnection = &WSConnection{
-		wsSocket:          wsSocket,
-		connId:            connId,
-		inChan:            make(chan *WsMessage, G_config.WsInChannelSize),
-		outChan:           make(chan *WsMessage, G_config.WsOutChannelSize),
-		closeChan:         make(chan byte),
-		lastHeartbeatTime: time.Now(),
-		rooms:             make(map[string]bool),
-	}
-
-	go wsConnection.readLoop()
-	go wsConnection.writeLoop()
-
-	return
 }
 
 // 发送消息

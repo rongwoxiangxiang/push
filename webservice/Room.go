@@ -8,13 +8,13 @@ import (
 type Room struct {
 	rwMutex     sync.RWMutex
 	roomId      string
-	connections map[uint64]*WSConnection
+	connections map[string]*WSConnection
 }
 
 func InitRoom(roomId string) (room *Room) {
 	room = &Room{
 		roomId:      roomId,
-		connections: make(map[uint64]*WSConnection),
+		connections: make(map[string]*WSConnection),
 	}
 	return
 }

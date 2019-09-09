@@ -1,6 +1,7 @@
 package webservice
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"log"
 	"net"
@@ -119,11 +120,6 @@ func InitService() (err error) {
 	mux.HandleFunc("/push/room", handlePushRoom)
 	mux.HandleFunc("/stats", handleStats)
 
-	// TLS证书解析验证
-	//if _, err = tls.LoadX509KeyPair(G_config.ServerPem, G_config.ServerKey); err != nil {
-	//	return common.ERR_CERT_INVALID
-	//}
-
 	server = &http.Server{
 		ReadTimeout:  time.Duration(G_config.ServiceReadTimeout) * time.Millisecond,
 		WriteTimeout: time.Duration(G_config.ServiceWriteTimeout) * time.Millisecond,
@@ -132,7 +128,7 @@ func InitService() (err error) {
 
 	// 监听端口
 	if listener, err = net.Listen("tcp", ":"+strconv.Itoa(G_config.ServicePort)); err != nil {
-		return
+		log.Fatal("Push Application Service err :", err)
 	}
 
 	// 赋值全局变量
@@ -141,8 +137,15 @@ func InitService() (err error) {
 	}
 
 	// 拉起服务
-	go server.Serve(listener)
-	//go server.ServeTLS(listener, G_config.ServerPem, G_config.ServerKey)
+	if G_config.BackServiceTls {
+		// TLS证书解析验证
+		if _, err = tls.LoadX509KeyPair(G_config.ServerPem, G_config.ServerKey); err != nil {
+			return common.ERR_CERT_INVALID
+		}
+		go server.ServeTLS(listener, G_config.ServerPem, G_config.ServerKey)
+	} else {
+		go server.Serve(listener)
+	}
 
 	for {
 		time.Sleep(1 * time.Second)

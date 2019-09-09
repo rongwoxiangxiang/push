@@ -29,6 +29,9 @@
   "每个连接最多加入房间数量": "目前房间ID没有校验, 所以先做简单的数量控制",
   "maxJoinRoom": 5,
 
+  "后台推送接口是否支持https": "默认为否",
+  "backServiceTls": false,
+
   "内部通讯HTTP2 TLS证书": "私有证书",
   "serverPem": "./default.pem",
 

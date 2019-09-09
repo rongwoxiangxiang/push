@@ -17,14 +17,7 @@ type Stats struct {
 	RoomCount int64 `json:"roomCount"`
 }
 
-var (
-	G_stats *Stats
-)
-
-func InitStats() (err error) {
-	G_stats = &Stats{}
-	return
-}
+var G_stats = &Stats{}
 
 func OnlineConnections_INCR() {
 	atomic.AddInt64(&G_stats.OnlineConnections, 1)

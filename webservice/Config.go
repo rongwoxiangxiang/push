@@ -3,11 +3,11 @@ package webservice
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 )
 
 // 程序配置
 type Config struct {
+	BackServiceTls      bool   `json:"backServiceTls"`
 	WsPort              int    `json:"wsPort"`
 	WsReadTimeout       int    `json:"wsReadTimeout"`
 	WsWriteTimeout      int    `json:"wsWriteTimeout"`
@@ -26,21 +26,34 @@ var (
 	G_config *Config
 )
 
-func InitConfig(filename string) (err error) {
+func defaultConfig() {
+	G_config = &Config{
+		WsPort:              123,
+		WsReadTimeout:       2000,
+		WsWriteTimeout:      2000,
+		WsInChannelSize:     1000,
+		WsOutChannelSize:    1000,
+		WsHeartbeatInterval: 60,
+		ServicePort:         456,
+		ServiceReadTimeout:  2000,
+		ServiceWriteTimeout: 2000,
+		MaxJoinRoom:         5,
+		BackServiceTls:      false,
+	}
+}
+
+func init() {
 	var (
 		content []byte
 		conf    Config
+		err     error
 	)
-
-	if content, err = ioutil.ReadFile(filename); err != nil {
-		log.Fatalf("Config: err io.read : %v", err)
+	if content, err = ioutil.ReadFile("application.json"); err != nil {
+		defaultConfig()
 		return
 	}
-
-	if err = json.Unmarshal(content, &conf); err != nil {
-		return
+	if err = json.Unmarshal(content, &conf); err == nil {
+		G_config = &conf
 	}
-
-	G_config = &conf
 	return
 }

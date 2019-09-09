@@ -10,9 +10,11 @@ var (
 	G_connMgr *WsConnMgr
 )
 
+type Map map[string]*WSConnection
+
 type WsConnMgr struct {
 	rwMutex     sync.RWMutex
-	connections map[uint64]*WSConnection
+	connections map[string]*WSConnection
 	rooms       map[string]*Room
 }
 
@@ -22,7 +24,7 @@ func InitConnMgr() (err error) {
 	)
 
 	connMgr = &WsConnMgr{
-		connections: make(map[uint64]*WSConnection),
+		connections: make(map[string]*WSConnection),
 		rooms:       make(map[string]*Room),
 	}
 
@@ -51,6 +53,8 @@ func (connMgr *WsConnMgr) JoinRoom(roomId string, wsConn *WSConnection) (err err
 		room    *Room
 		existed bool
 	)
+	connMgr.rwMutex.Lock()
+	defer connMgr.rwMutex.Unlock()
 	if room, existed = connMgr.rooms[roomId]; !existed {
 		room = InitRoom(roomId)
 		connMgr.rooms[roomId] = room
@@ -65,6 +69,8 @@ func (connMgr *WsConnMgr) LeaveRoom(roomId string, wsConn *WSConnection) (err er
 		room    *Room
 		existed bool
 	)
+	connMgr.rwMutex.Lock()
+	defer connMgr.rwMutex.Unlock()
 	if room, existed = connMgr.rooms[roomId]; !existed {
 		err = common.ERR_ROOM_ID_INVALID
 		return
@@ -78,12 +84,14 @@ func (connMgr *WsConnMgr) LeaveRoom(roomId string, wsConn *WSConnection) (err er
 }
 
 // 向所有在线用户发送消息
-func (connMgr *WsConnMgr) PushSingle(toUser uint64, msg *WsMessage) {
+func (connMgr *WsConnMgr) PushSingle(toUser string, msg *WsMessage) {
 	var (
 		connection *WSConnection
 		ok         bool
 		err        error
 	)
+	connMgr.rwMutex.RLock()
+	defer connMgr.rwMutex.RUnlock()
 	if connection, ok = connMgr.connections[toUser]; ok == false {
 		log.Printf("PushSingle user not exist, user {}", toUser)
 		return
@@ -96,6 +104,8 @@ func (connMgr *WsConnMgr) PushSingle(toUser uint64, msg *WsMessage) {
 
 // 向所有在线用户发送消息
 func (connMgr *WsConnMgr) PushAll(msg *WsMessage) {
+	connMgr.rwMutex.RLock()
+	defer connMgr.rwMutex.RUnlock()
 	for _, connect := range connMgr.connections {
 		connect.SendMessage(msg)
 	}
@@ -107,6 +117,8 @@ func (connMgr *WsConnMgr) PushRoom(roomId string, msg *WsMessage) (err error) {
 		room    *Room
 		existed bool
 	)
+	connMgr.rwMutex.RLock()
+	defer connMgr.rwMutex.RUnlock()
 	if room, existed = connMgr.rooms[roomId]; !existed {
 		err = common.ERR_ROOM_ID_INVALID
 		return

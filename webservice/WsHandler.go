@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
-	"strconv"
 	"time"
 	"webs/webservice/common"
 )
@@ -112,12 +111,13 @@ func (wsConnection *WSConnection) handleLeave(bizReq *BizMessage) (message *WsMe
 	return
 }
 
+// 处理Msg请求
 func (wsConnection *WSConnection) handleMsg(bizReq *BizMessage) (message *WsMessage, err error) {
 	msgData := &BizMsgData{}
 	if err = json.Unmarshal(bizReq.Data, msgData); err != nil {
 		return
 	}
-	msgData.FromUser = strconv.FormatUint(wsConnection.connId, 10)
+	msgData.FromUser = wsConnection.connId
 	if msgData.FromUser == msgData.ToUser {
 		log.Printf("handleMsg err[0] : same from and to user", msgData.ToUser)
 		return
@@ -136,27 +136,29 @@ func (wsConnection *WSConnection) handleMsg(bizReq *BizMessage) (message *WsMess
 		log.Printf("handleMsg err[1] : {}", err)
 		return
 	}
-	to, err := strconv.ParseUint(msgData.ToUser, 10, 64)
-	if err != nil {
-		log.Printf("handleMsg err[2] : {}", err)
-		return
-	}
-	G_connMgr.PushSingle(to, message)
+	G_connMgr.PushSingle(msgData.ToUser, message)
 	return
 }
 
-func (wsConnection *WSConnection) leaveAll() {
+//关闭连接，离开全部rooms
+func (wsConnection *WSConnection) handleLeaveAll() {
 	var (
 		roomId string
 	)
 	// 从所有房间中退出
 	for roomId, _ = range wsConnection.rooms {
-		G_connMgr.LeaveRoom(roomId, wsConnection)
+		if err := G_connMgr.LeaveRoom(roomId, wsConnection); err != nil {
+			log.Println("leave all error")
+		}
 		delete(wsConnection.rooms, roomId)
 	}
 }
 
 // 处理websocket请求
+// 1,收到PING则响应PONG: {"type": "PING"}, {"type": "PONG"}
+// 2,收到JOIN则加入ROOM: {"type": "JOIN", "data": {"room": "chrome-plugin"}}
+// 3,收到LEAVE则离开ROOM: {"type": "LEAVE", "data": {"room": "chrome-plugin"}}
+// 4,收到MSG信息返回并发送msg到对应clinet: {"type": "MSG", "data": {"to": "111","msg":"11wasdda"}}
 func (wsConnection *WSConnection) WSHandle() {
 	var (
 		message *WsMessage
@@ -194,11 +196,6 @@ func (wsConnection *WSConnection) WSHandle() {
 		}
 
 		bizResp = nil
-
-		// 1,收到PING则响应PONG: {"type": "PING"}, {"type": "PONG"}
-		// 2,收到JOIN则加入ROOM: {"type": "JOIN", "data": {"room": "chrome-plugin"}}
-		// 3,收到LEAVE则离开ROOM: {"type": "LEAVE", "data": {"room": "chrome-plugin"}}
-		// 4,收到MSG信息返回并发送msg到对应clinet: {"type": "MSG", "data": {"to": "111","msg":"11wasdda"}}
 
 		// 请求串行处理
 		switch bizReq.Type {
@@ -248,7 +245,7 @@ ERR:
 	wsConnection.Close()
 
 	// 离开所有房间
-	wsConnection.leaveAll()
+	wsConnection.handleLeaveAll()
 
 	// 从连接池中移除
 	G_connMgr.DelConn(wsConnection)
